@@ -575,7 +575,7 @@ performance schema instrumented if "UNIV_PFS_RWLOCK"
 is defined */
 static PSI_rwlock_info all_innodb_rwlocks[] = {
 	{ &btr_search_latch_key, "btr_search_latch", 0 },
-	PSI_RWLOCK_KEY(dict_operation_lock),
+	{ &dict_operation_lock_key, "dict_operation_lock", 0 },
 	PSI_RWLOCK_KEY(fil_space_latch),
 	PSI_RWLOCK_KEY(fts_cache_rw_lock),
 	PSI_RWLOCK_KEY(fts_cache_init_rw_lock),

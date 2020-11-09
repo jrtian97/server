@@ -1421,7 +1421,7 @@ public:
 
 	This latch also prevents lock waits when accessing the InnoDB
 	data dictionary tables. @see trx_t::dict_operation_lock_mode */
-	rw_lock_t	latch;
+	mysql_rwlock_t	latch;
 	row_id_t	row_id;		/*!< the next row id to assign;
 					NOTE that at a checkpoint this
 					must be written to the dict system
@@ -1557,16 +1557,12 @@ public:
 
 #ifdef UNIV_DEBUG
   /** Assert that the data dictionary is locked */
-  void assert_locked()
-  {
-    ut_ad(mutex_own(&mutex));
-    ut_ad(rw_lock_own(&latch, RW_LOCK_X));
-  }
+  void assert_locked() { ut_ad(mutex_own(&mutex)); }
 #endif
   /** Lock the data dictionary cache. */
   void lock(const char* file, unsigned line)
   {
-    rw_lock_x_lock_func(&latch, 0, file, line);
+    mysql_rwlock_wrlock(&latch);
     mutex_enter_loc(&mutex, file, line);
   }
 
@@ -1574,7 +1570,7 @@ public:
   void unlock()
   {
     mutex_exit(&mutex);
-    rw_lock_x_unlock(&latch);
+    mysql_rwlock_unlock(&latch);
   }
 
   /** Estimate the used memory occupied by the data dictionary
