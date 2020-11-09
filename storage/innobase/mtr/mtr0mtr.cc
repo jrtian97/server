@@ -426,7 +426,7 @@ void mtr_t::commit()
         freed_space= fil_system.sys_space;
       }
 
-      ut_ad(memo_contains(*freed_space));
+      ut_ad(freed_space->is_owner());
       /* Update the last freed lsn */
       freed_space->update_last_freed_lsn(m_commit_lsn);
 
