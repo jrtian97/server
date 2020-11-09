@@ -339,8 +339,10 @@ enum mtr_memo_type_t {
 
 	MTR_MEMO_SX_LOCK = RW_SX_LATCH << 5,
 
-	/** acquire X-latch on fil_space_t::latch */
-	MTR_MEMO_SPACE_X_LOCK = MTR_MEMO_SX_LOCK << 1
+	/** mysql_rwlock_rdlock() on fil_space_t::latch */
+	MTR_MEMO_SPACE_X_LOCK = MTR_MEMO_SX_LOCK << 1,
+	/** mysql_wrlock_wrlock() on fil_space_t::latch */
+	MTR_MEMO_SPACE_S_LOCK = MTR_MEMO_SX_LOCK << 2
 };
 #endif /* !UNIV_CHECKSUM */
 
