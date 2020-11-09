@@ -29590,7 +29590,7 @@ bool JOIN::all_selectivity_accounted_for_join_cardinality()
 bool is_sargable_predicate(Item *item, Item *value, void *arg)
 {
   SAME_FIELD *field_arg= (SAME_FIELD*)arg;
-  if (!field_arg->item->is_statistics_available)
+  if (!field_arg->is_statistics_available)
     return false;
 
   Item *field= item->real_item();

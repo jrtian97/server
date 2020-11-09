@@ -190,7 +190,10 @@ typedef struct st_table_ref
 */
 typedef struct same_field
 {
-  /* field item for which the entire predicate depends on */
+  /*
+    field item for the first encountered column while traversing
+    over the conditional predicate
+  */
   Item_field *item;
   /*
     TRUE : statistics available for the field via keys or EITS

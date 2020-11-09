@@ -4313,9 +4313,6 @@ bool Item_func_in::count_sargable_conds(void *arg)
 
 bool Item_func_in::is_predicate_selectivity_available(void *arg)
 {
-  if (const_item())
-    return false;
-
   SAME_FIELD *field_arg= (SAME_FIELD*)arg;
   if (!field_arg->is_statistics_available)
     return true;
@@ -5552,9 +5549,6 @@ bool Item_func_null_predicate::count_sargable_conds(void *arg)
 
 bool Item_func_null_predicate::is_predicate_selectivity_available(void *arg)
 {
-  if (const_item())
-    return false;
-
   if (is_sargable_predicate(args[0], NULL, arg))
     return false;
   return true;
@@ -5645,9 +5639,6 @@ bool Item_bool_func2::count_sargable_conds(void *arg)
 
 bool Item_bool_func2::is_predicate_selectivity_available(void *arg)
 {
-  if (const_item())
-    return false;
-
   if (is_sargable_predicate(args[0], args[1], arg) ||
       is_sargable_predicate(args[1], args[0], arg))
     return false;
@@ -5761,9 +5752,6 @@ SEL_TREE *Item_func_like::get_mm_tree(RANGE_OPT_PARAM *param, Item **cond_ptr)
 
 bool Item_func_like::is_predicate_selectivity_available(void *arg)
 {
-  if (const_item())
-    return false;
-
   if (with_sargable_pattern())
   {
     if (is_sargable_predicate(args[0], args[1], arg) ||
@@ -7216,7 +7204,7 @@ bool Item_equal::is_predicate_selectivity_available(void *arg)
 {
   /*
     For equality conditions like tbl1.col = tbl2.col
-    For such predicates all we want to know if the ndv is
+    we only want to know if the number of distinct values (ndv) is
     available for all the fields in the multiple equality or not.
   */
   Item_equal_fields_iterator it(*this);
