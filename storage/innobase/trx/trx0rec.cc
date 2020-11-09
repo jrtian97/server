@@ -2202,14 +2202,14 @@ trx_undo_get_undo_rec(
 	const table_name_t&	name,
 	trx_undo_rec_t**	undo_rec)
 {
-	rw_lock_s_lock(&purge_sys.latch);
+	mysql_rwlock_rdlock(&purge_sys.latch);
 
 	bool missing_history = purge_sys.changes_visible(trx_id, name);
 	if (!missing_history) {
 		*undo_rec = trx_undo_get_undo_rec_low(roll_ptr, heap);
 	}
 
-	rw_lock_s_unlock(&purge_sys.latch);
+	mysql_rwlock_unlock(&purge_sys.latch);
 
 	return(missing_history);
 }
@@ -2272,7 +2272,6 @@ trx_undo_prev_version_build(
 	byte*		buf;
 
 	ut_ad(!index->table->is_temporary());
-	ut_ad(!rw_lock_own(&purge_sys.latch, RW_LOCK_S));
 	ut_ad(index_mtr->memo_contains_page_flagged(index_rec,
 						    MTR_MEMO_PAGE_S_FIX
 						    | MTR_MEMO_PAGE_X_FIX));
@@ -2368,12 +2367,12 @@ trx_undo_prev_version_build(
 		    && row_upd_changes_disowned_external(update)) {
 			bool	missing_extern;
 
-			rw_lock_s_lock(&purge_sys.latch);
+			mysql_rwlock_rdlock(&purge_sys.latch);
 
 			missing_extern = purge_sys.changes_visible(
 				trx_id,	index->table->name);
 
-			rw_lock_s_unlock(&purge_sys.latch);
+			mysql_rwlock_unlock(&purge_sys.latch);
 
 			if (missing_extern) {
 				/* treat as a fresh insert, not to
