@@ -13140,6 +13140,17 @@ bool fk_handle_rename(THD *thd, TABLE_LIST *old_table, const LEX_CSTRING *new_db
   }
   for (FK_info &rk: share->referenced_keys)
   {
+    if (rk.self_ref())
+    {
+      /*
+        NB: referenced_keys holds the same pointer as foreign_keys for self-refs
+        (see Foreign_key_io::parse()), so we already renamed it to new name
+        in share->foreign_keys above. Just skip it here.
+      */
+      DBUG_ASSERT(0 == cmp_table(*new_db, rk.foreign_db));
+      DBUG_ASSERT(0 == cmp_table(*new_table_name, rk.foreign_table));
+      continue;
+    }
     if (0 != cmp_table(old_table->db, *new_db) &&
         rk.referenced_db.strdup(&share->mem_root, *new_db))
       goto mem_error;

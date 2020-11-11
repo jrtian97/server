@@ -27,8 +27,13 @@ mysql.func                                         OK
 mysql.global_priv                                  OK
 mysql.gtid_slave_pos                               OK
 mysql.help_category                                OK
-mysql.help_keyword                                 OK
-mysql.help_relation                                OK
+mysql.help_keyword
+Note     : Found 1 referenced keys
+status   : OK
+mysql.help_relation
+Error    : Referenced table mysql.help_topic does not refer this table
+Note     : Found 2 foreign keys
+status   : Operation failed
 mysql.help_topic                                   OK
 mysql.index_stats                                  OK
 mysql.innodb_index_stats                           OK
@@ -47,6 +52,9 @@ mysql.time_zone_name                               OK
 mysql.time_zone_transition                         OK
 mysql.time_zone_transition_type                    OK
 mysql.transaction_registry                         OK
+
+Repairing tables
+mysql.help_relation                                OK
 Phase 2/7: Installing used storage engines... Skipped
 Phase 3/7: Fixing views
 mysql.user                                         OK

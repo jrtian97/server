@@ -736,9 +736,7 @@ struct TABLE_SHARE
   FK_list referenced_keys;
   bool fk_handle_create(THD *thd, FK_create_vector &shares, FK_list *fk_add= NULL);
   void fk_revert_create(THD *thd, Table_name_set &ref_tables);
-#ifndef DBUG_OFF
-  bool dbug_check_foreign_keys(THD *thd);
-#endif
+  bool fk_check_consistency(THD *thd);
   bool referenced_by_foreign_key() const
   {
     return !referenced_keys.is_empty();
@@ -1866,6 +1864,13 @@ public:
   Lex_cstring* ref_db_ptr()
   {
     return referenced_db.str ? &referenced_db : &foreign_db;
+  }
+  bool self_ref() const
+  {
+    if (referenced_db.length && 0 != cmp_table(referenced_db, foreign_db))
+      return false;
+    // TODO: keep NULL in referenced_table for self-refs
+    return 0 == cmp_table(referenced_table, foreign_table);
   }
   bool assign(Foreign_key &fk, Table_name table);
   FK_info * clone(MEM_ROOT *mem_root) const;

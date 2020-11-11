@@ -296,11 +296,12 @@ public:
      Both lvalue and rvalue types are covered by perfect forwarding.
   */
   template <class T>
-  typename Base::iterator insert(T&& value) noexcept
+  typename Base::iterator insert(T&& value, bool &inserted) noexcept
   {
     try
     {
       auto ret= Base::insert(std::forward<T>(value));
+      inserted= ret.second;
       return ret.first;
     }
     catch (std::bad_alloc())
@@ -365,18 +366,24 @@ class set :
   public exception_wrapper<std::set<Key, Compare, Allocator> >
 {
 public:
-  const Key* insert(const Key& value)
+  const Key* insert(const Key& value, bool *inserted= NULL)
   {
+    bool ins;
     auto ret= exception_wrapper<std::set<Key, Compare, Allocator> >::
-      insert(value);
+      insert(value, ins);
+    if (inserted)
+      *inserted= ins;
     if (ret == std::set<Key, Compare, Allocator>::end())
       return NULL;
     return &*ret;
   }
-  const Key* insert(Key&& value)
+  const Key* insert(Key&& value, bool *inserted= NULL)
   {
+    bool ins;
     auto ret= exception_wrapper<std::set<Key, Compare, Allocator> >::
-      insert(std::forward<Key>(value));
+      insert(std::forward<Key>(value), ins);
+    if (inserted)
+      *inserted= ins;
     if (ret == std::set<Key, Compare, Allocator>::end())
       return NULL;
     return &*ret;
@@ -392,16 +399,22 @@ class map :
   public exception_wrapper<std::map<Key, T, Compare, Allocator> >
 {
 public:
-  T* insert(const Key& key, const T& value)
+  T* insert(const Key& key, const T& value, bool *inserted= NULL)
   {
+    bool ins;
     auto ret= exception_wrapper<std::map<Key, T, Compare, Allocator> >::
-      insert(std::make_pair(key, value));
+      insert(std::make_pair(key, value), ins);
+    if (inserted)
+      *inserted= ins;
     return &ret->second;
   }
-  T* insert(const Key& key, T&& value)
+  T* insert(const Key& key, T&& value, bool *inserted= NULL)
   {
+    bool ins;
     auto ret= exception_wrapper<std::map<Key, T, Compare, Allocator> >::
-      insert(std::make_pair(key, std::forward<T>(value)));
+      insert(std::make_pair(key, std::forward<T>(value)), ins);
+    if (inserted)
+      *inserted= ins;
     return &ret->second;
   }
 };

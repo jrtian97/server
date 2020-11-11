@@ -11,6 +11,12 @@ Slave info repository compatibility check: Found data in `mysql`.`slave_relay_lo
 Warning: Content of `mysql`.`slave_relay_log_info` table will be ignored as MariaDB supports file based repository.
 Slave server may not possess the correct replication metadata.
 Execution of CHANGE MASTER as per `mysql`.`slave_master_info` and  `mysql`.`slave_relay_log_info` table content is recommended.
+mysql.help_keyword
+Note     : Found 1 referenced keys
+mysql.help_relation
+Note     : Found 2 foreign keys
+mysql.help_topic
+Note     : Found 1 referenced keys
 connection slave;
 Slave info repository compatibility check: Found data in `mysql`.`slave_master_info` table.
 Warning: Content of `mysql`.`slave_master_info` table will be ignored as MariaDB supports file based info repository.
@@ -18,6 +24,12 @@ Slave info repository compatibility check: Found data in `mysql`.`slave_relay_lo
 Warning: Content of `mysql`.`slave_relay_log_info` table will be ignored as MariaDB supports file based repository.
 Slave server may not possess the correct replication metadata.
 Execution of CHANGE MASTER as per `mysql`.`slave_master_info` and  `mysql`.`slave_relay_log_info` table content is recommended.
+mysql.help_keyword
+Note     : Found 1 referenced keys
+mysql.help_relation
+Note     : Found 2 foreign keys
+mysql.help_topic
+Note     : Found 1 referenced keys
 connection master;
 TRUNCATE TABLE `mysql`.`slave_master_info`;
 TRUNCATE TABLE `mysql`.`slave_relay_log_info`;
@@ -26,7 +38,19 @@ TRUNCATE TABLE `mysql`.`slave_relay_log_info`;
 * mysql_upgrade script should not report any warning.              *
 ********************************************************************
 connection master;
+mysql.help_keyword
+Note     : Found 1 referenced keys
+mysql.help_relation
+Note     : Found 2 foreign keys
+mysql.help_topic
+Note     : Found 1 referenced keys
 connection slave;
+mysql.help_keyword
+Note     : Found 1 referenced keys
+mysql.help_relation
+Note     : Found 2 foreign keys
+mysql.help_topic
+Note     : Found 1 referenced keys
 "====== Clean up ======"
 connection master;
 DROP TABLE `mysql`.`slave_master_info`, `mysql`.`slave_relay_log_info`;

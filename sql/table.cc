@@ -456,10 +456,6 @@ void TABLE_SHARE::destroy()
   DBUG_ENTER("TABLE_SHARE::destroy");
   DBUG_PRINT("info", ("db: %s table: %s", db.str, table_name.str));
 
-  DBUG_ASSERT(!current_thd ||
-              current_thd->lex->sql_command != SQLCOM_FLUSH ||
-              !dbug_check_foreign_keys(current_thd));
-
   if (ha_share)
   {
     delete ha_share;
@@ -9540,36 +9536,52 @@ void FK_info::print(String& out)
 }
 
 
-#ifndef DBUG_OFF
-bool TABLE_SHARE::dbug_check_foreign_keys(THD *thd)
+bool TABLE_SHARE::fk_check_consistency(THD *thd)
 {
+  mbd::set<Table_name> warned;
+  mbd::set<Table_name> warned_self;
+  bool error= false;
+  uint rk_self_refs= 0;
+  uint fk_self_refs= 0;
   for (FK_info &rk: referenced_keys)
   {
-    /* NB: tdc_acquire_share() initiates endless loop because this works from inside
-       TABLE_SHARE freeing stack. */
-    TDC_element *el= tdc_lock_share(thd, rk.foreign_db.str, rk.foreign_table.str);
-    if (!el)
+    if (rk.self_ref())
     {
-      if (ha_table_exists(thd, &rk.foreign_db, &rk.foreign_table))
-        return false;
-
-      push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-                          ER_UNKNOWN_ERROR,
-                          "Foreign table %s.%s not exists",
-                          rk.foreign_db.str, rk.foreign_table.str);
+      if (cmp_table(rk.foreign_db, db) ||
+          cmp_table(rk.foreign_table, table_name))
+      {
+        bool warn;
+        if (!warned_self.insert(Table_name(rk.foreign_db, rk.foreign_table), &warn))
+          return true;
+        if (warn)
+        {
+          my_printf_error(ER_UNKNOWN_ERROR,
+                          "Self-reference in referenced list %s.%s does not point to this table",
+                          MYF(0), rk.foreign_db, rk.foreign_table);
+        }
+        DBUG_ASSERT(warn || error);
+        error= true;
+      }
+      rk_self_refs++;
+    }
+    TABLE_LIST tl;
+    tl.init_one_table(&rk.foreign_db, &rk.foreign_table, NULL, TL_IGNORE);
+    Share_acquire sa(thd, tl);
+    if (!sa.share)
+    {
+      if (!ha_table_exists(thd, &rk.foreign_db, &rk.foreign_table))
+      {
+        my_printf_error(ER_UNKNOWN_ERROR, "Foreign table %s.%s not exists",
+                        MYF(0), rk.foreign_db.str, rk.foreign_table.str);
+      }
       return true;
     }
-    if (el == MY_ERRPTR)
-    {
-      my_error(ER_OUT_OF_RESOURCES, MYF(0));
-      return true;
-    }
-    List_iterator_fast<FK_info> fk_it(el->share->foreign_keys);
+    List_iterator_fast<FK_info> fk_it(sa.share->foreign_keys);
     FK_info *fk;
     bool found_table= false;
     while ((fk= fk_it++))
     {
-      if (!cmp_table(fk->referenced_db, db) &&
+      if (!cmp_table(fk->ref_db(), db) &&
           !cmp_table(fk->referenced_table, table_name))
       {
         found_table= true;
@@ -9594,38 +9606,69 @@ bool TABLE_SHARE::dbug_check_foreign_keys(THD *thd)
           break;
       }
     }
-    tdc_unlock_share(el);
     if (!fk)
     {
-      push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-                          ER_UNKNOWN_ERROR,
-                          found_table ?
-                            "Foreign table %s.%s does not match foreign keys with referenced keys" :
-                            "Foreign table %s.%s does not refer this table",
-                          rk.foreign_db.str, rk.foreign_table.str);
-      return true;
+      bool warn;
+      if (!warned.insert(Table_name(rk.foreign_db, rk.foreign_table), &warn))
+        return true;
+      if (warn)
+      {
+        my_printf_error(ER_UNKNOWN_ERROR,
+                        found_table ?
+                          "Foreign table %s.%s does not match foreign keys with referenced keys" :
+                          "Foreign table %s.%s does not refer this table",
+                        MYF(0), sa.share->db.str, sa.share->table_name.str);
+      }
+      DBUG_ASSERT(warn || error);
+      error= true;
     }
+  }
+
+  warned.clear();
+  warned_self.clear();
+
+  if (referenced_keys.elements - rk_self_refs)
+  {
+    push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
+                        ER_UNKNOWN_ERROR,
+                        "Found %u referenced keys",
+                        referenced_keys.elements - rk_self_refs);
   }
 
   for (FK_info &fk: foreign_keys)
   {
-    TDC_element *el= tdc_lock_share(thd, fk.referenced_db.str, fk.referenced_table.str);
-    if (!el)
+    if (fk.self_ref())
     {
-      if (ha_table_exists(thd, &fk.referenced_db, &fk.referenced_table))
-        return false;
-      push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-                          ER_UNKNOWN_ERROR,
-                          "Referenced table %s.%s not exists",
-                          fk.referenced_db.str, fk.referenced_table.str);
+      if (cmp_table(fk.foreign_db, db) ||
+          cmp_table(fk.foreign_table, table_name))
+      {
+        bool warn;
+        if (!warned_self.insert(Table_name(fk.foreign_db, fk.foreign_table), &warn))
+          return true;
+        if (warn)
+        {
+          my_printf_error(ER_UNKNOWN_ERROR,
+                          "Self-reference in foreign list %s.%s does not point to this table",
+                          MYF(0), fk.foreign_db, fk.foreign_table);
+        }
+        DBUG_ASSERT(warn || error);
+        error= true;
+      }
+      fk_self_refs++;
+    }
+    TABLE_LIST tl;
+    tl.init_one_table(fk.ref_db_ptr(), &fk.referenced_table, NULL, TL_IGNORE);
+    Share_acquire sa(thd, tl);
+    if (!sa.share)
+    {
+      if (!ha_table_exists(thd, fk.ref_db_ptr(), &fk.referenced_table))
+      {
+        my_printf_error(ER_UNKNOWN_ERROR, "Referenced table %s.%s not exists",
+                        MYF(0), fk.ref_db().str, fk.referenced_table.str);
+      }
       return true;
     }
-    if (el == MY_ERRPTR)
-    {
-      my_error(ER_OUT_OF_RESOURCES, MYF(0));
-      return true;
-    }
-    List_iterator_fast<FK_info> ref_it(el->share->referenced_keys);
+    List_iterator_fast<FK_info> ref_it(sa.share->referenced_keys);
     FK_info *rk;
     bool found_table= false;
     while ((rk= ref_it++))
@@ -9655,21 +9698,48 @@ bool TABLE_SHARE::dbug_check_foreign_keys(THD *thd)
           break;
       }
     }
-    tdc_unlock_share(el);
     if (!rk)
     {
-      push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
-                          ER_UNKNOWN_ERROR,
-                          found_table ?
-                            "Foreign table %s.%s does not match foreign keys with referenced keys" :
-                            "Foreign table %s.%s does not refer this table",
-                          fk.foreign_db.str, fk.foreign_table.str);
-      return true;
+      bool warn;
+      if (!warned.insert(Table_name(fk.foreign_db, fk.foreign_table), &warn))
+        return true;
+      if (warn)
+      {
+        my_printf_error(ER_UNKNOWN_ERROR,
+                        found_table ?
+                          "Referenced table %s.%s does not match referenced keys with foreign keys" :
+                          "Referenced table %s.%s does not refer this table", MYF(0),
+                        sa.share->db.str, sa.share->table_name.str);
+      }
+      DBUG_ASSERT(warn || error);
+      error= true;
     }
   }
-  return false;
+
+  if (foreign_keys.elements - fk_self_refs)
+  {
+    push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
+                        ER_UNKNOWN_ERROR,
+                        "Found %u foreign keys",
+                        foreign_keys.elements - fk_self_refs);
+  }
+
+  if (fk_self_refs != rk_self_refs)
+  {
+    my_printf_error(ER_UNKNOWN_ERROR,
+                    "Self-references count in foreign list and referenced list do not match: %u vs %u",
+                    MYF(0), fk_self_refs, rk_self_refs);
+  }
+  else if (fk_self_refs)
+  {
+    push_warning_printf(thd, Sql_condition::WARN_LEVEL_NOTE,
+                        ER_UNKNOWN_ERROR,
+                        "Found %u self-references",
+                        fk_self_refs);
+  }
+
+  return error;
 }
-#endif
 
 
 enum TR_table::enabled TR_table::use_transaction_registry= TR_table::MAYBE;

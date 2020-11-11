@@ -1302,6 +1302,9 @@ bool Foreign_key_io::store(FK_list &foreign_keys, FK_list &referenced_keys)
 
   for (FK_info &rk: referenced_keys)
   {
+    // NB: we do not store hints on self-refs, they are stored from foreign_keys.
+    if (rk.self_ref())
+      continue;
     rk_count++;
     store_size+= hint_size(rk);
   }
@@ -1321,7 +1324,11 @@ bool Foreign_key_io::store(FK_list &foreign_keys, FK_list &referenced_keys)
 
   pos= store_length(pos, rk_count);
   for (FK_info &rk: referenced_keys)
+  {
+    if (rk.self_ref())
+      continue;
     store_hint(rk, pos);
+  }
 
   size_t new_length= (char *) pos - ptr();
   DBUG_ASSERT(new_length < alloced_length());
@@ -1406,6 +1413,15 @@ bool Foreign_key_io::parse(THD *thd, TABLE_SHARE *s, LEX_CUSTRING& image)
       if (read_string(*field_name, &s->mem_root, p))
         return true;
     }
+    /* If it is self-reference we also push to referenced_keys: */
+    if (!cmp_table(dst->referenced_db, s->db) && !cmp_table(dst->referenced_table, s->table_name))
+    {
+      if (s->referenced_keys.push_back(dst, &s->mem_root))
+      {
+        my_error(ER_OUT_OF_RESOURCES, MYF(0));
+        return true;
+      }
+    }
   }
   if (read_length(rk_count, p))
   {
@@ -1420,6 +1436,8 @@ bool Foreign_key_io::parse(THD *thd, TABLE_SHARE *s, LEX_CUSTRING& image)
       return true;
     if (read_string(hint_table, &s->mem_root, p))
       return true;
+    // NB: we do not store self-references into referenced hints
+    DBUG_ASSERT(cmp_table(hint_db, s->db) || cmp_table(hint_table, s->table_name));
     if (s->tmp_table || s->open_flags & GTS_FK_SHALLOW_HINTS)
     {
       /* For DROP TABLE we don't need full reference resolution. We just need
