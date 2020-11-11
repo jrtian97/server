@@ -1,4 +1,12 @@
 --source include/not_embedded.inc
+if (!`SELECT count(*) FROM INFORMATION_SCHEMA.VIEWS
+  WHERE TABLE_SCHEMA='mysql' AND TABLE_NAME='user'
+  AND CHARACTER_SET_CLIENT='latin1'
+  AND COLLATION_CONNECTION='latin1_swedish_ci'`)
+{
+  Skip Needs character_set_client=latin1 and collation_connection=latin1_swedish_ci \
+  in mysql.AddGeometryColumn and mysql.DropGeometryColumn;
+}
 
 #
 # MDEV-18457 Assertion `(bitmap->map + (bitmap->full_head_size/6*6)) <=

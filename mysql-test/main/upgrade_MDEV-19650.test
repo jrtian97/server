@@ -1,6 +1,14 @@
 
 -- source include/mysql_upgrade_preparation.inc
 
+if (!`SELECT count(*) FROM INFORMATION_SCHEMA.VIEWS
+  WHERE TABLE_SCHEMA='mysql' AND TABLE_NAME='user'
+  AND CHARACTER_SET_CLIENT='latin1'
+  AND COLLATION_CONNECTION='latin1_swedish_ci'`)
+{
+  Skip Needs character_set_client=latin1 and collation_connection=latin1_swedish_ci in mysql.user;
+}
+
 call mtr.add_suppression("Cannot load from mysql.proc. The table is probably corrupted");
 create database mysqltest1;
 use mysqltest1;
