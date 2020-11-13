@@ -1874,8 +1874,8 @@ public:
   }
   bool assign(Foreign_key &fk, Table_name table);
   FK_info * clone(MEM_ROOT *mem_root) const;
-  Table_name for_table(MEM_ROOT *mem_root) const;
-  Table_name ref_table(MEM_ROOT *mem_root) const;
+  Table_name for_table(MEM_ROOT *mem_root, bool copy= false) const;
+  Table_name ref_table(MEM_ROOT *mem_root, bool copy= false) const;
   void print(String &out);
 };
 

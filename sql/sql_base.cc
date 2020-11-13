@@ -4710,7 +4710,7 @@ handle_table(THD *thd, Query_tables_list *prelocking_ctx,
         *need_prelocking= TRUE;
 
         TABLE_LIST *tl= (TABLE_LIST *) thd->alloc(sizeof(TABLE_LIST));
-        Table_name for_table= fk->for_table(thd->mem_root);
+        Table_name for_table= fk->for_table(thd->mem_root, true);
         tl->init_one_table_for_prelocking(&for_table.db,
                                           &for_table.name,
                                           NULL, lock_type,
@@ -4746,7 +4746,7 @@ handle_table(THD *thd, Query_tables_list *prelocking_ctx,
 
 
         TABLE_LIST *tl= (TABLE_LIST *) thd->alloc(sizeof(TABLE_LIST));
-        Table_name ref_table= fk->ref_table(thd->mem_root);
+        Table_name ref_table= fk->ref_table(thd->mem_root, true);
         tl->init_one_table_for_prelocking(&ref_table.db,
                                           &ref_table.name,
                                           NULL, lock_type,
