@@ -20,12 +20,6 @@ SHOW GRANTS FOR user_super_replslave@localhost;
 Grants for user_super_replslave@localhost
 GRANT SUPER, REPLICATION SLAVE, SET USER, FEDERATED ADMIN, CONNECTION ADMIN, READ_ONLY ADMIN, REPLICATION SLAVE ADMIN, REPLICATION MASTER ADMIN, BINLOG ADMIN, BINLOG REPLAY ON *.* TO `user_super_replslave`@`localhost`
 # mysql_upgrade --force --silent 2>&1
-mysql.help_keyword
-Note     : Found 1 referenced keys
-mysql.help_relation
-Note     : Found 2 foreign keys
-mysql.help_topic
-Note     : Found 1 referenced keys
 FLUSH PRIVILEGES;
 #
 # Should get ALL PRIVILEGES WITH GRANT OPTION

@@ -321,12 +321,6 @@ REVOKE ALL PRIVILEGES ON *.* FROM u1@localhost, u2@localhost;
 DROP USER u1@localhost,u2@localhost;
 # test if FLUSH PRIVILEGES works without the proxies_priv table
 FLUSH PRIVILEGES;
-mysql.help_keyword
-Note     : Found 1 referenced keys
-mysql.help_relation
-Note     : Found 2 foreign keys
-mysql.help_topic
-Note     : Found 1 referenced keys
 SELECT Host,User,Proxied_host,Proxied_user,With_grant FROM mysql.proxies_priv;
 Host	localhost
 User	root
@@ -345,12 +339,6 @@ FLUSH PRIVILEGES;
 mysqld is alive
 # Executing 'mysqldump'
 # Executing 'mysql_upgrade'
-mysql.help_keyword
-Note     : Found 1 referenced keys
-mysql.help_relation
-Note     : Found 2 foreign keys
-mysql.help_topic
-Note     : Found 1 referenced keys
 #
 # Bug #59657: Move the client authentication_pam plugin into the 
 #  server repository
@@ -442,12 +430,6 @@ NO	plugin
 ALTER TABLE mysql.user MODIFY plugin char(64) DEFAULT '' NOT NULL;
 ALTER TABLE mysql.user MODIFY authentication_string TEXT NOT NULL;
 Run mysql_upgrade on a 5.5.10 external authentication column layout
-mysql.help_keyword
-Note     : Found 1 referenced keys
-mysql.help_relation
-Note     : Found 2 foreign keys
-mysql.help_topic
-Note     : Found 1 referenced keys
 SELECT IS_NULLABLE, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA= 'mysql' AND TABLE_NAME= 'user' AND
 COLUMN_NAME IN ('plugin', 'authentication_string')

@@ -12,15 +12,9 @@ mysql.func                                         OK
 mysql.global_priv                                  OK
 mysql.gtid_slave_pos                               OK
 mysql.help_category                                OK
-mysql.help_keyword
-Note     : Found 1 referenced keys
-status   : OK
-mysql.help_relation
-Note     : Found 2 foreign keys
-status   : OK
-mysql.help_topic
-Note     : Found 1 referenced keys
-status   : OK
+mysql.help_keyword                                 OK
+mysql.help_relation                                OK
+mysql.help_topic                                   OK
 mysql.index_stats                                  OK
 mysql.innodb_index_stats                           OK
 mysql.innodb_table_stats                           OK
