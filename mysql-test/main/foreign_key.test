@@ -177,13 +177,13 @@ create database D;
 create table D.T1(id int primary key);
 create table t2(id int primary key, f1 int references D.T1(id));
 select * from D.T1;
---replace_string d.t1 D.T1
+--replace_result d.t1 D.T1
 check table D.T1;
 drop table t2;
---replace_string d.t1 D.T1
+--replace_result d.t1 D.T1
 check table D.T1;
 flush tables;
---replace_string d.t1 D.T1
+--replace_result d.t1 D.T1
 check table D.T1;
 drop table D.T1;
 drop database D;

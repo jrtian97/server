@@ -59,9 +59,15 @@ set global innodb_eval_sql="BEGIN
 INSERT INTO SYS_FOREIGN VALUES ('D2/t2_ibfk_1', 'D2/t2', 'D1/t1', 1);
 INSERT INTO SYS_FOREIGN_COLS VALUES ('D2/t2_ibfk_1', 0, 'y', 'x');";
 
+--replace_result d1 D1 d2 D2
+check table D1.t1, D2.t2;
 --error ER_ROW_IS_REFERENCED_2
 drop database D1;
+--replace_result d1 D1 d2 D2
+check table D1.t1, D2.t2;
 drop database D2;
+--replace_result d1 D1 d2 D2
+check table D1.t1, D2.t2;
 select * from information_schema.innodb_sys_foreign;
 select * from information_schema.innodb_sys_foreign_cols;
 drop database D1;
