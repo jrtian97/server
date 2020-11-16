@@ -7549,7 +7549,7 @@ Gtid_log_event::Gtid_log_event(const char *buf, uint event_len,
     buf+= 8;
   }
   /* the extra flags check and actions */
-  if (buf - buf_0 < event_len)
+  if (static_cast<uint>(buf - buf_0) < event_len)
   {
     flags_extra= *buf;
     ++buf;
@@ -7599,11 +7599,11 @@ Gtid_log_event::Gtid_log_event(THD *thd_arg, uint64 seq_no_arg,
   /* Preserve any DDL or WAITED flag in the slave's binlog. */
   if (thd_arg->rgi_slave)
     flags2|= (thd_arg->rgi_slave->gtid_ev_flags2 & (FL_DDL|FL_WAITED));
-  /* count non-zero extra recoverable engines. total = extra + 1 */
+  /* count non-zero extra recoverable engines; total = extra + 1 */
   if (is_transactional &&
       (extra_engines=
        max<uint>(1,
-                 ha_count_rw(thd, NULL, true,
+                 ha_count_rw(thd, NULL,
                              thd_arg->in_multi_stmt_transaction_mode())) - 1)
       > 0)
   {

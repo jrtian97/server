@@ -5892,7 +5892,6 @@ MYSQL_BIN_LOG::write_gtid_event(THD *thd, bool standalone,
   uint32 local_server_id;
   uint64 seq_no;
   int err;
-
   DBUG_ENTER("write_gtid_event");
   DBUG_PRINT("enter", ("standalone: %d", standalone));
 
@@ -10129,10 +10128,8 @@ int TC_LOG_BINLOG::heuristic_binlog_rollback(HASH *xids)
 
   if (binlog_truncate_pos == 0)
     goto end; // Nothing to truncate
-  else
+
   {
-
-
     char buf[21];
     longlong10_to_str(truncate_gtid.seq_no, buf, 10);
     sql_print_information("tc-heuristic-recover: Binary log to be truncated "
@@ -10159,6 +10156,7 @@ int TC_LOG_BINLOG::heuristic_binlog_rollback(HASH *xids)
                     "statements are found beyond the truncation position; "
                     "transactions in doubt left intact",
                     binlog_truncate_file_name, binlog_truncate_pos);
+    goto end;
   }
   if ((error= write_state_to_file()))
   {
