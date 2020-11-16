@@ -21248,6 +21248,9 @@ fk_upgrade_create_fk(
 	ut_a(fld->len <= MAX_FULL_NAME_LEN);
 	memcpy(src_ref, fld->data, fld->len);
 	src_ref[fld->len] = 0;
+	if (lower_case_table_names == 1) {
+		innobase_casedn_str(src_ref);
+	}
 	memcpy(d.ref_name, src_ref, fld->len + 1);
 	LEX_CSTRING db, table;
 	table.str = (const char*) memchr(src_ref, '/', fld->len);
